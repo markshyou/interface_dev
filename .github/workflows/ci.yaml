@@ -24,8 +24,17 @@ jobs:
           pip install -r requirements.txt
           pip install pytest  # pytest 설치는 한번만 수행하면 됨
 
-      - name: Test
-        run: pytest frontend/ order/ store/ user/   # 각 앱 디렉토리 내부의 테스트 파일들을 인식하도록 수정
+      - name: Test frontend
+        run: pytest frontend/
+
+      - name: Test order
+        run: pytest order/
+
+      - name: Test store
+        run: pytest store/
+
+      - name: Test user
+        run: pytest user/
 
       - name: Build and tag Docker image
         run: |
