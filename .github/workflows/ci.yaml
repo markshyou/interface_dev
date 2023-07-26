@@ -1,0 +1,73 @@
+# .github/workflows/ci.yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [frontend, order, store, user]
+
+    # 락을 위한 세마포어 선언
+    env:
+      PUSH_SEMAPHORE: ${{ secrets.PUSH_SEMAPHORE }}
+      LOCK_PATH: "/tmp/push_lock_${{ matrix.service }}"
+
+    steps:
+      # 동시성을 관리하기 위해 락 파일 생성 (락 파일이 존재하면 해당 서비스는 순차적으로 실행됨)
+      - name: Check and acquire lock
+        id: acquire_lock
+        run: |
+          if [ ! -f $LOCK_PATH ]; then
+            echo "Acquiring lock for ${{ matrix.service }}"
+            touch $LOCK_PATH
+          else
+            echo "Lock for ${{ matrix.service }} is already acquired. Skipping this step."
+            exit 1
+          fi
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Configure Docker credential helper
+        run: |
+          echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
+      - name: Build and tag Docker image
+        run: |
+          cd ${{ matrix.service }}
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+          docker build -t interface_app/${{ matrix.service }}:${IMAGE_TAG} .
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} interface_app/${{ matrix.service }}:latest
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+      - name: Push Docker image to ECR
+        if: ${{ steps.acquire_lock.outputs.result == 'success' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: 480936841767
+        run: |
+          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          # ECR에 도커 이미지 푸시
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+      # 락 파일 삭제
+      - name: Release lock
+        if: always() # 항상 실행하여 락 파일 삭제
+        run: |
+          echo "Releasing lock for ${{ matrix.service }}"
+          rm -f $LOCK_PATH
+
+
