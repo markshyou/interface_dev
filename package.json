@@ -1,0 +1,22 @@
+{
+  "name": "interface_dev",
+  "version": "1.0.0",
+  "description": "soldesk interface team project",
+  "main": "interface_dev/frontend/app.py",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markshyou/interface_dev.git"
+  },
+  "keywords": [
+    "interfacedeb"
+  ],
+  "author": "markshyou",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/markshyou/interface_dev/issues"
+  },
+  "homepage": "https://github.com/markshyou/interface_dev#readme"
+}

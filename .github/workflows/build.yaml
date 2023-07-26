@@ -1,4 +1,4 @@
-name: Build Front
+name: Build
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
       - name: Check Node v
         run: node -v
 
-      - name: Build front
+      - name: Build
         run: |
           npm install
           npm run build
