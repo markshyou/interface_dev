@@ -51,7 +51,7 @@ jobs:
 
           # ECR에 도커 이미지 푸시
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/frontend:latest
-		  
+  
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/order:latest
                 
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/store:latest
