@@ -1,4 +1,3 @@
-# .github/workflows/ci.yaml
 name: CI
 
 on:
@@ -31,10 +30,22 @@ jobs:
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           docker build -t interface_app/${{ matrix.service }}:${IMAGE_TAG} .
-          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} interface_app/${{ matrix.service }}:latest
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
 
+        - name: Introduce wait time # ECR은 프로세스당 1개의 push만 허용하기 때문에 push명령에 딜레이 생성함
+          run: |
+            if [[ "${{ matrix.service }}" == "user" ]]; then
+              sleep 600
+            elif [[ "${{ matrix.service }}" == "order" ]]; then
+              sleep 900
+            elif [[ "${{ matrix.service }}" == "frontend" ]]; then
+              sleep 1200
+            fi
 
       - name: Push Docker image to ECR
+        if: ${{ matrix.service }} != 'store'  # store 서비스가 아닌 경우에만 실행
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -45,16 +56,24 @@ jobs:
           aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set region $AWS_REGION
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
           # ECR에 도커 이미지 푸시
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:store-${IMAGE_TAG}
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
 
+      - name: Push Docker image to ECR (for store service)
+        if: ${{ matrix.service }} == 'store'  # store 서비스인 경우에만 실행
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: 480936841767
+        run: |
+          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:user-${IMAGE_TAG}
 
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:order-${IMAGE_TAG}
-
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:frontend-${IMAGE_TAG}
+          # ECR에 도커 이미지 푸시
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
