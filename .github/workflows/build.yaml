@@ -1,4 +1,3 @@
-# build.yaml
 name: Build
 
 on:
@@ -8,8 +7,9 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build and tag Docker image
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         service: [frontend, order, store, user]
@@ -34,3 +34,4 @@ jobs:
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} interface_app/${{ matrix.service }}:latest
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+

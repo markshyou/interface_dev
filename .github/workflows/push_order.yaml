@@ -1,18 +1,22 @@
-# push_order.yaml
 name: Push Order
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["push_user"]
+    types:
+      - completed
 
 jobs:
   push_order:
     name: Push Order image
-    needs: push_user
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Push Docker image to ECR
+        if: github.event.workflow_run.conclusion == 'success'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -27,3 +31,4 @@ jobs:
 
           # ECR에 도커 이미지 푸시
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/order:latest
+
