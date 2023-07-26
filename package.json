@@ -2,10 +2,9 @@
   "name": "interface_dev",
   "version": "1.0.0",
   "description": "soldesk interface team project",
-  "main": "interface_dev/frontend/app.py",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "python interface_dev/frontend/app.py"
+    "build": "python frontend/app.py"
   },
   "repository": {
     "type": "git",
