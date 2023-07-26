@@ -51,3 +51,6 @@ jobs:
 
           # ECR에 도커 이미지 푸시
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+      # 동시 push 작업을 방지하기 위해 딜레이 설정함
+      - name: Introduce wait time
+        run: sleep 30
