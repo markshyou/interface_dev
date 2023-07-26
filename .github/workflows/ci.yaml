@@ -1,5 +1,4 @@
 # .github/workflows/ci.yaml
-
 name: CI
 
 on:
@@ -23,23 +22,32 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Configure Docker credential helper
+        run: |
+          echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
+
+      - name: Build and tag Docker image
+        run: |
+          cd ${{ matrix.service }}
+          docker build -t interface_app/${{ matrix.service }}:${{ github.run_number }} .
+          docker tag interface_app/${{ matrix.service }}:${{ github.run_number }} interface_app/${{ matrix.service }}:latest
+
       - name: Push Docker image to ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_ACCOUNT_ID: 480936841767
         run: |
           # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-          # 도커 이미지 빌드
-          docker build -t interface_app/${{ matrix.service }}:${{ github.run_number }} .
-          
-          # 빌드한 이미지에 태그 추가
-          docker tag interface_app/${{ matrix.service }}:${{ github.run_number }} interface_app/${{ matrix.service }}:latest
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
           # ECR에 도커 이미지 푸시
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/interface_app
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+
 
 
 
