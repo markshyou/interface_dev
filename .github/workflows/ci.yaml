@@ -22,15 +22,10 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Configure Docker credential helper
-        run: |
-          echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
-
       - name: Build and tag Docker image
         run: |
           cd ${{ matrix.service }}
-          docker build -t interface_app/${{ matrix.service }}:${{ github.run_number }} .
-          docker tag interface_app/${{ matrix.service }}:${{ github.run_number }} interface_app/${{ matrix.service }}:latest
+          docker build -t 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest .
 
       - name: Push Docker image to ECR
         env:
