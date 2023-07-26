@@ -25,11 +25,10 @@ jobs:
 
       - name: Build and tag Docker image
         run: |
-          # 도커 이미지 빌드
+          cd ${{ matrix.service }}  # 해당 서비스 디렉터리로 이동
           docker build -t interface_app/${{ matrix.service }}:${{ github.run_number }} .
-          
-          # 빌드한 이미지에 태그 추가
           docker tag interface_app/${{ matrix.service }}:${{ github.run_number }} interface_app/${{ matrix.service }}:latest
+          cd ..  # 이전 디렉터리로 복귀
 
       - name: Push Docker image to ECR
         run: |
@@ -37,5 +36,5 @@ jobs:
           echo ${{ secrets.AWS_ACCESS_KEY_ID }} >> aws_creds
           echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} >> aws_creds
           echo ${{ secrets.AWS_REGION }} >> aws_creds
-          docker run --rm -v $PWD:/work -w /work --env-file aws_creds amazon/aws-cli ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app
+          docker run --rm -v $PWD:/work -w /work/${{ matrix.service }} --env-file aws_creds amazon/aws-cli ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}
