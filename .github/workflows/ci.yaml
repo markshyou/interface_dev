@@ -1,4 +1,3 @@
-# .github/workflows/ci.yaml
 name: CI
 
 on:
@@ -14,7 +13,16 @@ jobs:
       matrix:
         service: [frontend, order, store, user]
 
+    # Semaphore 선언
+    env:
+      PUSH_SEMAPHORE: ${{ steps.set_semaphore.outputs.timestamp }}
+
     steps:
+      # Semaphore 값 설정
+      - name: Set Semaphore
+        id: set_semaphore
+        run: echo "timestamp=$(date +%s)" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -35,8 +43,8 @@ jobs:
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
 
-
       - name: Push Docker image to ECR
+        if: ${{ env.PUSH_SEMAPHORE == steps.set_semaphore.outputs.timestamp }}  # Semaphore를 체크하여 한 번에 하나의 서비스만 처리
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -51,6 +59,4 @@ jobs:
 
           # ECR에 도커 이미지 푸시
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
-      # 동시 push 작업을 방지하기 위해 딜레이 설정함
-      - name: Introduce wait time
-        run: sleep 30
+
