@@ -1,6 +1,6 @@
 # test_user.py
 from flask import jsonify, session
-from user.app import app
+from ..user.app import app
 
 def test_index():
     # Given

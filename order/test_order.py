@@ -1,6 +1,6 @@
 # test_order.py
 from flask import jsonify
-from order.app import app
+from ..order.app import app
 
 def test_products():
     # Given

@@ -1,6 +1,6 @@
 # test_store.py
 from flask import jsonify
-from store.app import app
+from ..store.app import app
 
 def test_store_status():
     # Given
