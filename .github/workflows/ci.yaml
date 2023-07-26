@@ -30,11 +30,13 @@ jobs:
           docker tag interface_app/${{ matrix.service }}:${{ github.run_number }} interface_app/${{ matrix.service }}:latest
           cd ..  # 이전 디렉터리로 복귀
 
-      - name: Push Docker image to ECR
-        run: |
-          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
-          echo ${{ secrets.AWS_ACCESS_KEY_ID }} >> aws_creds
-          echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} >> aws_creds
-          echo ${{ secrets.AWS_REGION }} >> aws_creds
-          docker run --rm -v $PWD:/work -w /work/${{ matrix.service }} --env-file aws_creds amazon/aws-cli ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}
+- name: Push Docker image to ECR
+  env:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+  run: |
+    # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
+    docker run --rm -v $PWD:/work -w /work --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_REGION amazon/aws-cli ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+    docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app
+
