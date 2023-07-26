@@ -1,0 +1,66 @@
+version: "3.3"
+
+services:
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"  # 로그 레벨 설정
+      - "--api.insecure=true"  # 인증 없이 Traefik API에 접근 가능
+      - "--providers.docker=true"  # Docker 프로바이더 사용
+      - "--providers.docker.exposedbydefault=false"  # 모든 컨테이너를 자동으로 노출하지 않음
+      - "--entrypoints.web.address=:80"  # 웹 트래픽을 받을 엔트리 포인트 설정
+    ports:
+      - "80:80"  # 호스트의 80 포트와 컨테이너의 80 포트 연결
+      - "8080:8080"  # 호스트의 8080 포트와 컨테이너의 8080 포트 연결
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"  # 호스트의 Docker 소켓을 컨테이너와 공유 (읽기 전용)
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"  # Traefik을 이용하여 라우팅 및 로드 밸런싱
+      - "traefik.http.routers.whoami.rule=Path(`/whoami`)"  # /whoami 경로로 요청 전달
+      - "traefik.http.middlewares.strip-counter.stripprefix.prefixes=/whoami"  # /whoami 접두사 제거
+      - "traefik.http.routers.whoami.entrypoints=web"  # 웹 엔트리 포인트를 통해 라우팅
+
+  order:
+    image: order-docker
+    container_name: "order-service"
+    labels:
+      - "traefik.enable=true"  # Traefik을 이용하여 라우팅 및 로드 밸런싱
+      - "traefik.http.routers.order.rule=PathPrefix(`/api/order`)"  # /api/order로 시작하는 경로로 요청 전달
+    expose:
+      - 9001  # 컨테이너의 9001 포트 노출
+    restart: always  # 컨테이너 재시작 설정
+
+  front:
+    image: front-docker
+    container_name: "front-service"
+    labels:
+      - "traefik.enable=true"  # Traefik을 이용하여 라우팅 및 로드 밸런싱
+      - "traefik.http.routers.front.rule=Path(`/`) || PathPrefix(`/w`)"  # / 또는 /w로 시작하는 경로로 요청 전달
+    expose:
+      - 9000  # 컨테이너의 9000 포트 노출
+    restart: always  # 컨테이너 재시작 설정
+
+  store:
+    image: store-docker
+    container_name: "store-service"
+    labels:
+      - "traefik.enable=true"  # Traefik을 이용하여 라우팅 및 로드 밸런싱
+      - "traefik.http.routers.store.rule=PathPrefix(`/api/store`)"  # /api/store로 시작하는 경로로 요청 전달
+    expose:
+      - 9003  # 컨테이너의 9003 포트 노출
+    restart: always  # 컨테이너 재시작 설정
+
+  user:
+    image: user-docker
+    container_name: "user-service"
+    labels:
+      - "traefik.enable=true"  # Traefik을 이용하여 라우팅 및 로드 밸런싱
+      - "traefik.http.routers.user.rule=PathPrefix(`/api/user`)"  # /api/user로 시작하는 경로로 요청 전달
+    expose:
+      - 9002  # 컨테이너의 9002 포트 노출
+    restart: always  # 컨테이너 재시작 설정
