@@ -1,6 +1,5 @@
-
 from flask import session
-import app
+from frontend.app import app
 
 def test_index():
     # Given
