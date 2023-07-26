@@ -1,5 +1,3 @@
-# .github/workflows/ci.yaml
-
 name: CI
 
 on:
@@ -13,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [front, order, store, user]
+        service: [frontend, order, store, user]
 
     steps:
       - name: Checkout repository
@@ -22,6 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          # pytest 설치 추가
+          pip install pytest
 
       - name: Test
         run: pytest
@@ -42,4 +42,3 @@ jobs:
           echo ${{ secrets.AWS_REGION }} >> aws_creds
           docker run --rm -v $PWD:/work -w /work --env-file aws_creds amazon/aws-cli ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app
-
