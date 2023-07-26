@@ -34,15 +34,15 @@ jobs:
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
 
-        - name: Introduce wait time
-          run: |
-            if [[ "${{ matrix.service }}" == "user" ]]; then
-              sleep 600
-            elif [[ "${{ matrix.service }}" == "order" ]]; then
-              sleep 900
-            elif [[ "${{ matrix.service }}" == "frontend" ]]; then
-              sleep 1200
-            fi
+      - name: Introduce wait time
+        run: |
+          if [[ "${{ matrix.service }}" == "user" ]]; then
+            sleep 600
+          elif [[ "${{ matrix.service }}" == "order" ]]; then
+            sleep 900
+          elif [[ "${{ matrix.service }}" == "frontend" ]]; then
+            sleep 1200
+          fi
 
       - name: Push Docker image to ECR
         if: ${{ matrix.service }} != 'store'  # store 서비스가 아닌 경우에만 실행
