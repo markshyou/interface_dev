@@ -1,3 +1,5 @@
+# .github/workflows/ci.yaml
+
 name: CI
 
 on:
@@ -19,19 +21,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd ${{ matrix.service }}
           pip install -r requirements.txt
-          # pytest 설치 추가
-          pip install pytest
+          pip install pytest  # pytest 설치는 한번만 수행하면 됨
 
       - name: Test
-        run: |
-          cd ${{ matrix.service }}
-          pytest
+        run: pytest frontend/ order/ store/ user/   # 각 앱 디렉토리 내부의 테스트 파일들을 인식하도록 수정
 
       - name: Build and tag Docker image
         run: |
-          cd ${{ matrix.service }}
           # 도커 이미지 빌드
           docker build -t interface_app/${{ matrix.service }}:${{ github.run_number }} .
           
@@ -40,7 +37,6 @@ jobs:
 
       - name: Push Docker image to ECR
         run: |
-          cd ${{ matrix.service }}
           # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
           echo ${{ secrets.AWS_ACCESS_KEY_ID }} >> aws_creds
           echo ${{ secrets.AWS_SECRET_ACCESS_KEY }} >> aws_creds
