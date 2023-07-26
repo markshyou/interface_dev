@@ -34,7 +34,7 @@ jobs:
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
 
-        - name: Introduce wait time # ECR은 프로세스당 1개의 push만 허용하기 때문에 push명령에 딜레이 생성함
+        - name: Introduce wait time
           run: |
             if [[ "${{ matrix.service }}" == "user" ]]; then
               sleep 600
