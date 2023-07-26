@@ -1,3 +1,4 @@
+# .github/workflows/ci.yaml
 name: CI
 
 on:
@@ -6,8 +7,8 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build Docker images
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,21 +26,15 @@ jobs:
         run: |
           echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
 
-      - name: Build Docker image
+      - name: Build and tag Docker image
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           docker build -t interface_app/${{ matrix.service }}:${IMAGE_TAG} .
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
 
-  push:
-    name: Push Docker images to ECR
-    needs: build
-    runs-on: ubuntu-latest
 
-    steps:
-      - name: Push Docker image to ECR - store
-        if: matrix.service == 'store'
+      - name: Push Docker image to ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -50,63 +45,16 @@ jobs:
           aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set region $AWS_REGION
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
           # ECR에 도커 이미지 푸시
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:store-${IMAGE_TAG}
 
-      - name: Push Docker image to ECR - user
-        if: matrix.service == 'user'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: 480936841767
-        run: |
-          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
-          # ECR에 도커 이미지 푸시
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:user-${IMAGE_TAG}
 
-      - name: Push Docker image to ECR - order
-        if: matrix.service == 'order'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: 480936841767
-        run: |
-          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
-          # ECR에 도커 이미지 푸시
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:order-${IMAGE_TAG}
 
-      - name: Push Docker image to ECR - frontend
-        if: matrix.service == 'frontend'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: 480936841767
-        run: |
-          # AWS CLI를 사용하여 ECR에 도커 이미지 푸시
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-
-          # ECR에 도커 이미지 푸시
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:frontend-${IMAGE_TAG}
-
-
-
-
-
