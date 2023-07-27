@@ -3,4 +3,3 @@ build:
 
 clean:
     docker rmi frontend
-
