@@ -1,4 +1,5 @@
 build:
-	docker build --tag store-app .
+    docker build --tag ${SERVICE} .
+    
 clean:
-	docker rmi store-app
+    docker rmi ${SERVICE}

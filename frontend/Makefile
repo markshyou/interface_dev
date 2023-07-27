@@ -1,4 +1,5 @@
 build:
-	docker build --tag front-app .
-clean: 
-	docker rmi front-app
+    docker build --tag ${SERVICE} .
+    
+clean:
+    docker rmi ${SERVICE}

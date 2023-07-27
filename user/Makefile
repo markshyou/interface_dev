@@ -1,4 +1,5 @@
 build:
-	docker build --tag user-app .
+    docker build --tag ${SERVICE} .
+    
 clean:
-	docker rmi user-app
+    docker rmi ${SERVICE}

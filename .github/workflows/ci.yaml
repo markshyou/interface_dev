@@ -28,8 +28,8 @@ jobs:
       - name: Build Docker image
         run: |
           cd ${{ matrix.service }}
+          SERVICE=${{ matrix.service }} docker build --tag ${{ matrix.service }} .
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          make build
 
       - name: Tag and push Docker image to ECR
         if: ${{ matrix.service }} != 'store'  # store 서비스가 아닌 경우에만 실행
@@ -40,8 +40,7 @@ jobs:
           AWS_ACCOUNT_ID: 480936841767
         run: |
           cd ${{ matrix.service }}
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          docker tag user-app:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
 
@@ -54,8 +53,7 @@ jobs:
           AWS_ACCOUNT_ID: 480936841767
         run: |
           cd ${{ matrix.service }}
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          docker tag user-app:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
 

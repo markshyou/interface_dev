@@ -1,4 +1,5 @@
 build:
-	docker build --tag order-app .
+    docker build --tag ${SERVICE} .
+    
 clean:
-	docker rmi order-app
+    docker rmi ${SERVICE}
