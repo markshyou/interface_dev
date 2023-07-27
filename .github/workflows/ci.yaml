@@ -55,7 +55,7 @@ jobs:
           aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           # ECR에 도커 이미지 푸시
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_REGION.amazonaws.com/interface_app/${{ matrix.service }}:latest
       - name: Push Docker image to ECR (for store service)
         if: ${{ matrix.service }} == 'store'  # store 서비스인 경우에만 실행
         env:
