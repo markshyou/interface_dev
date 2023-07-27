@@ -1,5 +1,5 @@
 build:
-    docker build --tag interface-app-${SERVICE}:${IMAGE_TAG} .
-    
+    docker build --tag store .
+
 clean:
-    docker rmi interface-app-${SERVICE}
+    docker rmi store

@@ -1,5 +1,6 @@
 build:
-    docker build --tag interface-app-${SERVICE}:${IMAGE_TAG} .
-    
+    docker build --tag user .
+
 clean:
-    docker rmi interface-app-${SERVICE}
+    docker rmi user
+

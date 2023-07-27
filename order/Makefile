@@ -1,5 +1,6 @@
 build:
-    docker build --tag interface-app-${SERVICE}:${IMAGE_TAG} .
-    
+    docker build --tag order .
+
 clean:
-    docker rmi interface-app-${SERVICE}
+    docker rmi order
+
