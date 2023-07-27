@@ -28,11 +28,10 @@ jobs:
       - name: Build Docker image
         run: |
           cd ${{ matrix.service }}
-          SERVICE=${{ matrix.service }} docker build --tag ${{ matrix.service }} .
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+          make build
 
       - name: Tag and push Docker image to ECR
-        if: ${{ matrix.service }} != 'store'  # store 서비스가 아닌 경우에만 실행
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -40,22 +39,10 @@ jobs:
           AWS_ACCOUNT_ID: 480936841767
         run: |
           cd ${{ matrix.service }}
-          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+          docker tag interface-app-${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
-
-      - name: Tag and push Docker image to ECR (for store service)
-        if: ${{ matrix.service }} == 'store'  # store 서비스인 경우에만 실행
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: 480936841767
-        run: |
-          cd ${{ matrix.service }}
-          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
 
       - name: Clean Docker images (optional, remove if not needed)
         run: |
