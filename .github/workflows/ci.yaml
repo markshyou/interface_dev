@@ -29,8 +29,7 @@ jobs:
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           docker build -t interface_app/${{ matrix.service }}:${IMAGE_TAG} .
           docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} interface_app/${{ matrix.service }}:latest
-          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
-          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+          
       - name: Introduce wait time
         run: |
           if [[ "${{ matrix.service }}" == "user" ]]; then
