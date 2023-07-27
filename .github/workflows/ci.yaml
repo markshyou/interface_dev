@@ -40,6 +40,7 @@ jobs:
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}
+          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
+
