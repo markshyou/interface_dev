@@ -55,7 +55,7 @@ var products_list = new Vue({
 	request_order: function(orderId) {
             axios({
                 method: "get",
-                url: "http://k8s-green-0cdbb37da4-789741293.ap-northeast-2.elb.amazonaws.com/api/order/"+orderId,
+                url: "http://k8s-green-0cdbb37da4-2101224078.ap-northeast-2.elb.amazonaws.com/api/order/"+orderId,
                 timeout: 3000,
                 responseType: 'json',
             }).then( response => {
@@ -72,7 +72,7 @@ var products_list = new Vue({
 	fetchData() {
             axios({
                 method: "get",
-                url: "http://k8s-green-0cdbb37da4-789741293.ap-northeast-2.elb.amazonaws.com/api/order",
+                url: "http://k8s-green-0cdbb37da4-2101224078.ap-northeast-2.elb.amazonaws.com/api/order",
                 timeout: 3000,
                 responseType: 'json',
             }).then( response => {
