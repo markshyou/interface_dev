@@ -1,5 +1,5 @@
 build:
-    docker build --tag user .
+	docker build --tag user .
 
 clean:
-    docker rmi user
+	docker rmi user

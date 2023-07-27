@@ -1,5 +1,5 @@
 build:
-    docker build --tag frontend .
+	docker build --tag frontend .
 
 clean:
-    docker rmi frontend
+	docker rmi frontend

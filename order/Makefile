@@ -1,6 +1,6 @@
 build:
-    docker build --tag order .
+	docker build --tag order .
 
 clean:
-    docker rmi order
+	docker rmi order
 

@@ -1,5 +1,5 @@
 build:
-    docker build --tag store .
+	docker build --tag store .
 
 clean:
-    docker rmi store
+	docker rmi store
