@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [front, order, store, user]
+        service: [frontend, order, store, user]
 
     steps:
       - name: Checkout repository
@@ -25,15 +25,13 @@ jobs:
         run: |
           echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
 
-      - name: Check for changes in service directory
-        id: check_changes
+      - name: Build Docker image
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.event.after }} > changed_files.txt
-          cat changed_files.txt
-          if grep -q "${{ matrix.service }}" changed_files.txt; then echo "Service has changes"; else echo "No changes in service"; fi
+          cd ${{ matrix.service }}
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+          make build
 
-      - name: Build and push Docker image
-        if: steps.check_changes.outputs.result == 'Service has changes'
+      - name: Tag and push Docker image to ECR
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -42,6 +40,7 @@ jobs:
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          docker build --tag 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG} .
+          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
+
