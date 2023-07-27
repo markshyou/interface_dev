@@ -20,16 +20,18 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+
       - name: Configure Docker credential helper
         run: |
           echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
+
       - name: Build and tag Docker image
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           docker build -t interface_app/${{ matrix.service }}:${IMAGE_TAG} .
-          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:${IMAGE_TAG}
-          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest          
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+          docker tag interface_app/${{ matrix.service }}:${IMAGE_TAG} 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}:latest          
 
       - name: Introduce wait time
         run: |
@@ -40,6 +42,7 @@ jobs:
           elif [[ "${{ matrix.service }}" == "frontend" ]]; then
             sleep 1200
           fi
+
       - name: Push Docker image to ECR
         if: ${{ matrix.service }} != 'store'  # store 서비스가 아닌 경우에만 실행
         env:
@@ -54,7 +57,8 @@ jobs:
           aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           # ECR에 도커 이미지 푸시
-          docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app/${{ matrix.service }}:latest
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}-${IMAGE_TAG}
+
       - name: Push Docker image to ECR (for store service)
         if: ${{ matrix.service }} == 'store'  # store 서비스인 경우에만 실행
         env:
@@ -69,4 +73,4 @@ jobs:
           aws configure set region $AWS_REGION
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           # ECR에 도커 이미지 푸시
-          docker push 480936841767.dkr.ecr.ap-northeast-2.amazonaws.com/interface_app/${{ matrix.service }}:latest
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface_app:${{ matrix.service }}:latest
