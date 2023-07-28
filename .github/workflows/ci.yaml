@@ -1,11 +1,13 @@
+name: Combined Workflows
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  ci:
-    name: CI
+  ci_and_build:
+    name: CI and Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,22 +25,29 @@ jobs:
         run: |
           echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
 
-      - name: Build Docker image
+      - name: Determine changed directories and Build Docker image
+        id: ci_build
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          make build
 
-      - name: Tag and push Docker image to ECR
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCOUNT_ID: 480936841767
+          # Determine changed directories
+          git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
+          grep -Eo '(frontend|user|order|store)' changed_files.txt > changed_apps.txt || echo "No changes"
+
+          # Build Docker image if there are changes
+          if [ -s changed_apps.txt ]; then
+            make build
+            docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+            docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
+          fi
+
+      - name: Handle "No changes"
         run: |
-          cd ${{ matrix.service }}
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
-
+          if [ -s ${{ matrix.service }}/changed_apps.txt ]; then
+            echo "Changes detected in ${{ matrix.service }} - continue the workflow"
+          else
+            echo "No changes in ${{ matrix.service }} - mark the job as succeeded"
+            exit 0
+          fi
