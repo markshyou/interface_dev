@@ -17,24 +17,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get commit hash of the latest commit
-        id: commit_hash
-        run: echo "::set-output name=hash::$(git rev-parse HEAD)"
-
-      - name: Install dependencies
-        run: |
-          cd ${{ matrix.service }}
-          pip install -r requirements.txt
-
-      - name: Configure Docker credential helper
-        run: |
-          echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
+      - name: Get commit message
+        id: commit_message
+        run: echo "::set-output name=message::$(git log --format=%B -n 1 ${{ github.sha }})"
 
       - name: Determine changed directories
         id: changes
         run: |
           git fetch origin main
-          git diff --name-only ${{ steps.commit_hash.outputs.hash }} origin/main > changed_files.txt
+          git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
           if grep -qE '^${matrix.service}/' changed_files.txt; then
             echo "Changes detected in ${matrix.service} directory."
             touch ${matrix.service}_changed.txt
@@ -44,7 +35,7 @@ jobs:
           fi
 
       - name: Build and push Docker image for ${{ matrix.service }}
-        if: steps.changes.outputs.${{ matrix.service }}_changed != 'No changes'
+        if: steps.changes.outputs.${{ matrix.service }}_changed != 'No changes' && steps.commit_message.outputs.message contains '[${{ matrix.service }}]'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
