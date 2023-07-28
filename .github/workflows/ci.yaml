@@ -27,12 +27,13 @@ jobs:
           git fetch origin main
           git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
           if grep -qE '^${{ matrix.service }}/' changed_files.txt; then
-            echo "Changes detected in ${matrix.service} directory."
-            touch ${matrix.service}_changed.txt
+            echo "Changes detected in ${{ matrix.service }} directory."
+            touch ${{ matrix.service }}_changed.txt
           else
-            echo "No changes in ${matrix.service} directory."
-            echo "No changes" > ${matrix.service}_changed.txt
+            echo "No changes in ${{ matrix.service }} directory."
+            echo "No changes" > ${{ matrix.service }}_changed.txt
           fi
+        shell: bash
 
       - name: Build and push Docker image for ${{ matrix.service }}
         if: steps.changes.outputs.${{ matrix.service }}_changed != 'No changes' && steps.commit_message.outputs.message contains '[${{ matrix.service }}]'
