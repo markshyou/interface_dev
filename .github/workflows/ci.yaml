@@ -19,6 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd ${{ matrix.service }}
           pip install -r requirements.txt
 
       - name: Configure Docker credential helper
@@ -29,12 +30,17 @@ jobs:
         id: changes
         run: |
           git fetch origin main
-          git diff --name-only origin/main > changed_files.txt
-          grep -Eo '(${matrix.service})' changed_files.txt > changed_apps.txt || echo "No changes"
-          cat changed_apps.txt
+          git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
+          if grep -qE '^${matrix.service}/' changed_files.txt; then
+            echo "Changes detected in ${matrix.service} directory."
+            touch ${matrix.service}_changed.txt
+          else
+            echo "No changes in ${matrix.service} directory."
+            echo "No changes" > ${matrix.service}_changed.txt
+          fi
 
-      - name: Build and push Docker images
-        if: steps.changes.outputs.changed != 'No changes'
+      - name: Build and push Docker image for ${{ matrix.service }}
+        if: steps.changes.outputs.${{ matrix.service }}_changed != 'No changes'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
