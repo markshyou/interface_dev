@@ -28,7 +28,8 @@ jobs:
       - name: Determine changed directories
         id: changes
         run: |
-          git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
+          git fetch origin main
+          git diff --name-only origin/main > changed_files.txt
           grep -Eo '(${matrix.service})' changed_files.txt > changed_apps.txt || echo "No changes"
           cat changed_apps.txt
 
