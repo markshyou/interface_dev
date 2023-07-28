@@ -17,6 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Get commit hash of the latest commit
+        id: commit_hash
+        run: echo "::set-output name=hash::$(git rev-parse HEAD)"
+
       - name: Install dependencies
         run: |
           cd ${{ matrix.service }}
@@ -30,7 +34,7 @@ jobs:
         id: changes
         run: |
           git fetch origin main
-          git diff --name-only ${{ github.event.before }} origin/main > changed_files.txt
+          git diff --name-only ${{ steps.commit_hash.outputs.hash }} origin/main > changed_files.txt
           if grep -qE '^${matrix.service}/' changed_files.txt; then
             echo "Changes detected in ${matrix.service} directory."
             touch ${matrix.service}_changed.txt
