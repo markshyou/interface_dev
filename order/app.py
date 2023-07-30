@@ -55,7 +55,7 @@ def order(oid):
     for v in data: 
         if v["id"]==oid:
             sid=v["storeId"]
-    response = requests.get("k8s-green-0cdbb37da4-2101224078.ap-northeast-2.elb.amazonaws.com/api/store/"+sid)
+    response = requests.get("k8s-apps-3d357e75b3-1843384727.ap-northeast-2.elb.amazonaws.com/api/store/"+sid)
     store_status = json.loads(response.content)
     return store_status 
 

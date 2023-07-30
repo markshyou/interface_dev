@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: CI
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
           echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
 
       - name: Check if service code is modified
-        id: check-service-modified
+        id: check-modified
         run: |
           if [[ -n "$(git diff --name-only ${{ github.sha }}^..${{ github.sha }} -- ${service}/)" ]]; then
             echo "Service code is modified."
@@ -35,18 +35,19 @@ jobs:
             echo "Service code is not modified."
             echo "::set-output name=modified::false"
           fi
+          shell: /usr/bin/bash -e {0}
 
-      - name: Build and push Docker image to ECR
-        if: steps.check-service-modified.outputs.modified == 'true'
+      - name: Build and push Docker image
+        if: steps.check-modified.outputs.modified == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCOUNT_ID: 480936841767
         run: |
-          cd ${service}
+          cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           make build
-          docker tag ${service}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${service}-${IMAGE_TAG}
+          docker tag ${{ matrix.service }}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${service}-${IMAGE_TAG}
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
