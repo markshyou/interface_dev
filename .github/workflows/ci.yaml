@@ -1,51 +1,52 @@
-name: Build Front
+name: Build and Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build:
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: [frontend, order, store, user]
 
     steps:
-      - name: Checkout source code
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
-        if: ${{ github.event.head_commit.modified }}
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: $AWS_REGION
-
-      - name: Login to Amazon ECR
-        if: ${{ github.event.head_commit.modified }}
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Get image tag(version)
-        if: ${{ github.event.head_commit.modified }}
-        id: image
+      - name: Install dependencies
         run: |
-          VERSION=$(echo ${{ github.sha }} | cut -c1-8)
-          echo "VERSION=$VERSION"
-          echo "::set-output name=version::$VERSION"
+          pip install -r requirements.txt
 
-      - name: Build, tag, and push image to Amazon ECR
-        if: ${{ github.event.head_commit.modified }}
-        id: image-info
+      - name: Configure Docker credential helper
+        run: |
+          echo '{"credHelpers": {"aws": "ecr-login"}}' > $HOME/.docker/config.json
+
+      - name: Check if service code is modified
+        id: check-service-modified
+        run: |
+          if [[ -n "$(git diff --name-only ${{ github.sha }}^..${{ github.sha }} -- ${service}/)" ]]; then
+            echo "Service code is modified."
+            echo "::set-output name=modified::true"
+          else
+            echo "Service code is not modified."
+            echo "::set-output name=modified::false"
+          fi
+
+      - name: Build and push Docker image to ECR
+        if: steps.check-service-modified.outputs.modified == 'true'
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: demo-${{ matrix.service }}
-          IMAGE_TAG: ${{ steps.image.outputs.version }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: 480936841767
         run: |
-          echo "::set-output name=ecr_repository::$ECR_REPOSITORY"
-          echo "::set-output name=image_tag::$IMAGE_TAG"
-          cd ${{ matrix.service }}
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          cd ${service}
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+          make build
+          docker tag ${service}:latest 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${service}-${IMAGE_TAG}
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${service}-${IMAGE_TAG}
