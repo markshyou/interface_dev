@@ -56,12 +56,10 @@ jobs:
 
       - name: Update Kubernetes manifests and push changes
         run: |
-          echo \${{ steps.login-ecr.outputs.registry }}
-          echo \${{ steps.image-info.outputs.ecr_repository }}
-          echo \${{ steps.image-info.outputs.image_tag }}
           cd interface_k8s/manifest/overlays/dev/frontend
-          kustomize edit set image \${{ steps.login-ecr.outputs.registry}}/\${{ steps.image-info.outputs.ecr_repository }}=\${{ steps.login-ecr.outputs.registry}}/\${{ steps.image-info.outputs.ecr_repository }}:\${{ steps.image-info.outputs.image_tag }}
-          cat kustomization.yaml
+          for service in frontend order store user; do
+            IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+            kustomize edit set image 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app=480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app:${service}-${IMAGE_TAG}
           done
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
