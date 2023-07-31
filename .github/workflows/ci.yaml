@@ -60,7 +60,7 @@ jobs:
 
       - name: Update Kubernetes manifests and push changes
         run: |
-          cd interface_k8s/overlays/dev
+          cd interface_k8s/manifest/overlays/dev
           for service in frontend order store user; do
             IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
             kustomize edit set image 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app=480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app:${service}-${IMAGE_TAG}
