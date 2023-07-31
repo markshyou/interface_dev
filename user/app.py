@@ -27,7 +27,7 @@ def logout():
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
-        port=9002,
+        port=31003,
         debug=True
     )
 
