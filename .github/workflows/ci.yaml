@@ -53,7 +53,7 @@ jobs:
       - name: Checkout interface_k8s repository
         uses: actions/checkout@v2
         with:
-          repository: $GITHUB_USERNAME/interface_k8s
+          repository: markshyou/interface_k8s
           ref: main
           token: ${{ secrets.ACTION_TOKEN }}
           path: interface_k8s
