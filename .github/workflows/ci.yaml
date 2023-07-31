@@ -1,4 +1,4 @@
-name: CI/CD 
+name: CI/CD
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  build_and_push:
-    name: Build and Push Docker Images
+  build_and_deploy:
+    name: Build, Push Docker Images, and Deploy to Kubernetes
     runs-on: ubuntu-latest
 
     strategy:
@@ -15,7 +15,7 @@ jobs:
         service: [frontend, order, store, user]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout interface_dev repository
         uses: actions/checkout@v2
 
       - name: Install dependencies
@@ -45,11 +45,6 @@ jobs:
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
 
-  deploy_to_k8s:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Checkout interface_k8s repository
         uses: actions/checkout@v2
         with:
