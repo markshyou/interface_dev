@@ -31,6 +31,7 @@ jobs:
           cd ${{ matrix.service }}
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
           make build
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV # 환경 변수로 IMAGE_TAG 설정
 
       - name: Tag and push Docker image to ECR
         env:
@@ -56,10 +57,7 @@ jobs:
       - name: Update Kubernetes manifests and push changes
         run: |
           cd interface_k8s/manifest/overlays/dev/frontend
-          for service in frontend order store user; do
-            IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
-            kustomize edit set image 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app=480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app:${service}-${IMAGE_TAG}
-          done
+          IMAGE_TAG=${IMAGE_TAG} kustomize edit set image 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend-app=480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/frontend-app:frontend-${IMAGE_TAG}
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add .
