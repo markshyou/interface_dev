@@ -42,6 +42,12 @@ jobs:
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
 
+  deploy_to_k8s:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build_and_push  # This indicates that the job depends on the successful completion of 'build_and_push'
+
+    steps:
       - name: Checkout interface_k8s repository
         uses: actions/checkout@v2
         with:
