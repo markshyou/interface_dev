@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD 
 
 on:
   push:
@@ -6,9 +6,10 @@ on:
       - main
 
 jobs:
-  ci:
-    name: CI
+  build_and_push:
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         service: [frontend, order, store, user]
@@ -44,3 +45,28 @@ jobs:
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           docker push 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/interface-app:${{ matrix.service }}-${IMAGE_TAG}
 
+  deploy_to_k8s:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout interface_k8s repository
+        uses: actions/checkout@v2
+        with:
+          repository: $GITHUB_USERNAME/interface_k8s
+          ref: main
+          token: ${{ secrets.ACTION_TOKEN }}
+          path: interface_k8s
+
+      - name: Update Kubernetes manifests and push changes
+        run: |
+          cd interface_k8s/overlays/dev
+          for service in frontend order store user; do
+            IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-8)
+            kustomize edit set image 480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app=480936841767.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${service}-app:${service}-${IMAGE_TAG}
+          done
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add .
+          git commit -m "Update image tags"
+          git push origin main
