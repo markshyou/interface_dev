@@ -30,7 +30,7 @@ jobs:
         run: |
           cd ${{ matrix.service }}
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)-${GITHUB_SHA:0:8}  # Unique tag using date and first 8 characters of commit hash
-          make build
+          make
 
       - name: Tag and push Docker image to ECR
         env:
